@@ -72,5 +72,3 @@ void loop() {
 
 	handleTime();
 }
-
-
