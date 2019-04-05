@@ -2,13 +2,13 @@
 #include <Blinker.h>
 #include <EEPROM.h>
 
-#define LED_PIN 8
-#define HEATER_PIN 6
-#define BUTTON_PIN 4
+#define LED_PIN 16
+#define HEATER_PIN 5
+#define BUTTON_PIN 17
 
-#define TIME_SHORT 20000
-#define TIME_MEDIUM 30000
-#define TIME_LONG 40000
+#define TIME_SHORT 180000
+#define TIME_MEDIUM 300000
+#define TIME_LONG 420000
 
 #define TIME_SHORT_BYTE 1
 #define TIME_MEDIUM_BYTE 2
@@ -19,7 +19,6 @@
 #define ADDRESS 0
 
 Blinker blinker(LED_PIN);
-bool heaterOn = false;
 bool warningOff = false;
 unsigned long timeOut = 0;
 unsigned long timePressed = 0;
@@ -62,11 +61,15 @@ unsigned long getTimeShutdown() {
 	return time;
 }
 
+bool isHeaterOn() {
+	return digitalRead(HEATER_PIN) == HIGH;
+}
+
 void turnOff() {
 	Serial.println("HEATER: OFF");
 	
 	digitalWrite(LED_PIN, LOW);
-	heaterOn = false;
+	digitalWrite(HEATER_PIN, LOW);
 	timeOut = 0;
 	warningOff = false;
 	blinker.stop();
@@ -77,11 +80,11 @@ void turnOn() {
 	
 	timeOut = millis() + getTimeShutdown();
 	digitalWrite(LED_PIN, HIGH);
-	heaterOn = true;
+	digitalWrite(HEATER_PIN, HIGH);
 }
 
 void handleTime() {
-	if (warningOff == false && heaterOn == true && timeOut - millis() < TIME_WARNING) {
+	if (warningOff == false && isHeaterOn() == true && timeOut - millis() < TIME_WARNING) {
 		warningOff = true;
 		blinker.start();
 	}
@@ -132,7 +135,7 @@ void loop() {
 	if (digitalRead(BUTTON_PIN) == LOW) {
 		if (timePressed == 0) {
 			timePressed = millis() + 5000;
-			if (heaterOn == false) {
+			if (isHeaterOn() == false) {
 				turnOn();
 			} else {
 				if (warningOff == true) {
